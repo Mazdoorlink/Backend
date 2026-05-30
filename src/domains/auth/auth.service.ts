@@ -3,6 +3,7 @@ import { sign, verify } from "hono/jwt";
 import { eq, and } from "drizzle-orm";
 import { setupDb } from "../../db/db";
 import { users, refreshTokens } from "../../db/schema";
+import { AppError } from "../../utils/AppError";
 
 export class AuthService {
   constructor(
@@ -43,7 +44,7 @@ export class AuthService {
       .from(users)
       .where(eq(users.mobile, data.mobile))
       .limit(1);
-    if (existingUser.length > 0) throw new Error("User already exists");
+    if (existingUser.length > 0) throw new AppError("User already exists");
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(data.password, salt);
@@ -65,10 +66,10 @@ export class AuthService {
     const db = setupDb(this.env.DATABASE_URL);
 
     const userRecord = await db.select().from(users).where(eq(users.mobile, data.mobile)).limit(1);
-    if (userRecord.length === 0) throw new Error("Invalid credentials");
+    if (userRecord.length === 0) throw new AppError("Invalid credentials", 401);
 
     const isMatch = await bcrypt.compare(data.password, userRecord[0].password);
-    if (!isMatch) throw new Error("Invalid credentials");
+    if (!isMatch) throw new AppError("Invalid credentials");
 
     const tokens = await this.generateTokens(userRecord[0].id, userRecord[0].role, db);
 
@@ -95,7 +96,7 @@ export class AuthService {
       if (tokenRecord.length === 0) {
         // If signature is valid but not in DB, it was revoked or already used (possible token theft)
         // In strict implementations, you might revoke ALL tokens for this user here.
-        throw new Error("Refresh token revoked or invalid");
+        throw new AppError("Refresh token revoked or invalid", 401);
       }
 
       // Delete the old token (Token Rotation)
@@ -108,13 +109,13 @@ export class AuthService {
         .where(eq(users.id, decoded.id as string))
         .limit(1);
       if (userRecord.length === 0 || userRecord[0].status !== "ACTIVE") {
-        throw new Error("User account is inactive or deleted");
+        throw new AppError("User account is inactive or deleted");
       }
 
-      // 5. Generate and store new token pair
+      // Generate and store new token pair
       return await this.generateTokens(userRecord[0].id, userRecord[0].role, db);
     } catch (error) {
-      throw new Error("Invalid or expired refresh token");
+      throw new AppError("Invalid or expired refresh token", 401);
     }
   }
 }
