@@ -7,7 +7,11 @@ import { AppError } from "../../utils/AppError";
 
 export class AuthService {
   constructor(
-    private env: { DATABASE_URL: string; JWT_SECRET: string; JWT_REFRESH_SECRET: string },
+    private env: {
+      HYPERDRIVE: Hyperdrive;
+      JWT_SECRET: string;
+      JWT_REFRESH_SECRET: string;
+    },
   ) {}
 
   // Helper method for dual-token generation
@@ -37,7 +41,7 @@ export class AuthService {
   }
 
   async register(data: any) {
-    const db = setupDb(this.env.DATABASE_URL);
+    const db = setupDb(this.env.HYPERDRIVE.connectionString);
 
     const existingUser = await db
       .select()
@@ -59,32 +63,52 @@ export class AuthService {
       })
       .returning();
 
-    return { id: newUser[0].id, mobile: newUser[0].mobile, role: newUser[0].role };
+    return {
+      id: newUser[0].id,
+      mobile: newUser[0].mobile,
+      role: newUser[0].role,
+    };
   }
 
   async login(data: any) {
-    const db = setupDb(this.env.DATABASE_URL);
+    const db = setupDb(this.env.HYPERDRIVE.connectionString);
 
-    const userRecord = await db.select().from(users).where(eq(users.mobile, data.mobile)).limit(1);
+    const userRecord = await db
+      .select()
+      .from(users)
+      .where(eq(users.mobile, data.mobile))
+      .limit(1);
     if (userRecord.length === 0) throw new AppError("Invalid credentials", 401);
 
     const isMatch = await bcrypt.compare(data.password, userRecord[0].password);
     if (!isMatch) throw new AppError("Invalid credentials");
 
-    const tokens = await this.generateTokens(userRecord[0].id, userRecord[0].role, db);
+    const tokens = await this.generateTokens(
+      userRecord[0].id,
+      userRecord[0].role,
+      db,
+    );
 
     return {
       ...tokens,
-      user: { id: userRecord[0].id, mobile: userRecord[0].mobile, role: userRecord[0].role },
+      user: {
+        id: userRecord[0].id,
+        mobile: userRecord[0].mobile,
+        role: userRecord[0].role,
+      },
     };
   }
 
   async rotateRefreshToken(oldRefreshToken: string) {
-    const db = setupDb(this.env.DATABASE_URL);
+    const db = setupDb(this.env.HYPERDRIVE.connectionString);
 
     try {
       // Verify cryptographic signature of the old refresh token
-      const decoded = await verify(oldRefreshToken, this.env.JWT_REFRESH_SECRET, "HS256");
+      const decoded = await verify(
+        oldRefreshToken,
+        this.env.JWT_REFRESH_SECRET,
+        "HS256",
+      );
 
       // Check if token actually exists in the DB (prevents revoked tokens from being used)
       const tokenRecord = await db
@@ -100,7 +124,9 @@ export class AuthService {
       }
 
       // Delete the old token (Token Rotation)
-      await db.delete(refreshTokens).where(eq(refreshTokens.id, tokenRecord[0].id));
+      await db
+        .delete(refreshTokens)
+        .where(eq(refreshTokens.id, tokenRecord[0].id));
 
       // Get user to encode new role in case it was updated
       const userRecord = await db
@@ -113,7 +139,11 @@ export class AuthService {
       }
 
       // Generate and store new token pair
-      return await this.generateTokens(userRecord[0].id, userRecord[0].role, db);
+      return await this.generateTokens(
+        userRecord[0].id,
+        userRecord[0].role,
+        db,
+      );
     } catch (error) {
       throw new AppError("Invalid or expired refresh token", 401);
     }

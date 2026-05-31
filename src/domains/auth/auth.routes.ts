@@ -4,7 +4,7 @@ import { AuthService } from "./auth.service";
 import { createRouter } from "../../utils/appFactory";
 
 type Bindings = {
-  DATABASE_URL: string;
+  HYPERDRIVE: Hyperdrive;
   JWT_SECRET: string;
   JWT_REFRESH_SECRET: string;
 };
@@ -17,7 +17,10 @@ authRoutes.openapi(registerRoute, async (c) => {
 
   // No try-catch needed!
   const user = await authService.register(data);
-  return c.json({ success: true as const, message: "User registered", data: user }, 201);
+  return c.json(
+    { success: true as const, message: "User registered", data: user },
+    201,
+  );
 });
 
 authRoutes.openapi(loginRoute, async (c) => {
@@ -25,7 +28,10 @@ authRoutes.openapi(loginRoute, async (c) => {
   const authService = new AuthService(c.env);
 
   const result = await authService.login(data);
-  return c.json({ success: true as const, message: "Login successful", data: result }, 200);
+  return c.json(
+    { success: true as const, message: "Login successful", data: result },
+    200,
+  );
 });
 
 authRoutes.openapi(refreshRoute, async (c) => {
@@ -34,7 +40,11 @@ authRoutes.openapi(refreshRoute, async (c) => {
 
   const tokens = await authService.rotateRefreshToken(refreshToken);
   return c.json(
-    { success: true as const, message: "Tokens refreshed successfully", data: tokens },
+    {
+      success: true as const,
+      message: "Tokens refreshed successfully",
+      data: tokens,
+    },
     200,
   );
 });

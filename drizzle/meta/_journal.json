@@ -8,6 +8,13 @@
       "when": 1780144807261,
       "tag": "0000_concerned_wilson_fisk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1780216224270,
+      "tag": "0001_even_paladin",
+      "breakpoints": true
     }
   ]
 }
