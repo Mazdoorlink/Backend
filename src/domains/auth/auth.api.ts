@@ -1,6 +1,6 @@
-import { createRoute, z } from "@hono/zod-openapi";
-import { registerSchema, loginSchema } from "./auth.validation";
-import { successResponse, errorResponse } from "../../utils/apiSchema";
+import { createRoute, z } from '@hono/zod-openapi';
+import { registerSchema, loginSchema } from './auth.validation';
+import { successResponse, errorResponse } from '../../utils/apiSchema';
 
 const userResponseSchema = z.object({
   id: z.uuid(),
@@ -20,37 +20,37 @@ const tokenResponseSchema = z.object({
 });
 
 export const registerRoute = createRoute({
-  method: "post",
-  path: "/register",
-  tags: ["Authentication"],
-  request: { body: { content: { "application/json": { schema: registerSchema } } } },
+  method: 'post',
+  path: '/register',
+  tags: ['Authentication'],
+  request: { body: { content: { 'application/json': { schema: registerSchema } } } },
   responses: {
-    201: successResponse(userResponseSchema, "User registered successfully"),
-    400: errorResponse("Validation Error or User Exists"),
+    201: successResponse(userResponseSchema, 'User registered successfully'),
+    400: errorResponse('Validation Error or User Exists'),
   },
 });
 
 export const loginRoute = createRoute({
-  method: "post",
-  path: "/login",
-  tags: ["Authentication"],
-  request: { body: { content: { "application/json": { schema: loginSchema } } } },
+  method: 'post',
+  path: '/login',
+  tags: ['Authentication'],
+  request: { body: { content: { 'application/json': { schema: loginSchema } } } },
   responses: {
     200: successResponse(
       tokenResponseSchema.extend({ user: userResponseSchema }),
-      "Login successful",
+      'Login successful',
     ),
-    401: errorResponse("Invalid credentials"),
+    401: errorResponse('Invalid credentials'),
   },
 });
 
 export const refreshRoute = createRoute({
-  method: "post",
-  path: "/refresh-token",
-  tags: ["Authentication"],
-  request: { body: { content: { "application/json": { schema: refreshTokenSchema } } } },
+  method: 'post',
+  path: '/refresh-token',
+  tags: ['Authentication'],
+  request: { body: { content: { 'application/json': { schema: refreshTokenSchema } } } },
   responses: {
-    200: successResponse(tokenResponseSchema, "Tokens refreshed successfully"),
-    401: errorResponse("Invalid or expired refresh token"),
+    200: successResponse(tokenResponseSchema, 'Tokens refreshed successfully'),
+    401: errorResponse('Invalid or expired refresh token'),
   },
 });

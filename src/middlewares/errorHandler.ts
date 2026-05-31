@@ -1,6 +1,6 @@
-import { ErrorHandler } from "hono";
-import { AppError } from "../utils/AppError";
-import { HTTPException } from "hono/http-exception";
+import { ErrorHandler } from 'hono';
+import { AppError } from '../utils/AppError';
+import { HTTPException } from 'hono/http-exception';
 
 export const globalErrorHandler: ErrorHandler = (err, c) => {
   // Handle our custom business logic errors
@@ -15,7 +15,7 @@ export const globalErrorHandler: ErrorHandler = (err, c) => {
 
   // Handle unexpected server panics/crashes
   // In a real app, you would send this stack trace to Sentry or CloudWatch here
-  console.error("[FATAL ERROR]:", err);
+  console.error('[FATAL ERROR]:', err);
 
-  return c.json({ success: false, message: "Internal Server Error" }, 500);
+  return c.json({ success: false, message: 'Internal Server Error' }, 500);
 };
