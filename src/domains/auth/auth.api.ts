@@ -3,7 +3,7 @@ import { registerSchema, loginSchema } from "./auth.validation";
 import { successResponse, errorResponse } from "../../utils/apiSchema";
 
 const userResponseSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   mobile: z.string(),
   role: z.string(),
 });
@@ -44,7 +44,6 @@ export const loginRoute = createRoute({
   },
 });
 
-// New Route Definition
 export const refreshRoute = createRoute({
   method: "post",
   path: "/refresh-token",

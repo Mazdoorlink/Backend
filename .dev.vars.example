@@ -1,0 +1,22 @@
+# -----------------------------------------------------------------------------
+# DATABASE CONFIGURATION
+# -----------------------------------------------------------------------------
+# PostgreSQL connection string. 
+DATABASE_URL="postgresql://username:password@localhost:5432/db_name"
+
+# -----------------------------------------------------------------------------
+# AUTHENTICATION
+# -----------------------------------------------------------------------------
+# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+JWT_SECRET="secret_key"
+JWT_REFRESH_SECRET="refresh_secret_key"
+
+# -----------------------------------------------------------------------------
+# FILE STORAGE (Upcoming Phase)
+# -----------------------------------------------------------------------------
+# Since the FRS mandates AWS S3 (or Cloudflare R2) for KYC documents, 
+# you will eventually need these when we build the file upload service.
+# S3_BUCKET_NAME="mazdoorlink-kyc-documents"
+# S3_ACCESS_KEY_ID="your_access_key"
+# S3_SECRET_ACCESS_KEY="your_secret_key"
+# S3_REGION="ap-south-1"

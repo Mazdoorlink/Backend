@@ -6,10 +6,7 @@ export const createRouter = <T extends Record<string, any> = {}>() => {
   return new OpenAPIHono<T>({
     defaultHook: (result, c) => {
       if (!result.success) {
-        const cleanErrors = result.error.issues.map((issue) => ({
-          field: issue.path.join("."),
-          message: issue.message,
-        }));
+        const cleanErrors = result.error.issues.map((issue) => issue.message);
 
         return c.json(
           {
