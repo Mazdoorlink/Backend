@@ -11,3 +11,11 @@ export const loginSchema = z.object({
   mobile: z.string().min(10).max(15),
   password: z.string().min(1),
 });
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1),
+});
+
+export const logoutSchema = z.object({
+  refreshToken: z.string().min(1),
+});

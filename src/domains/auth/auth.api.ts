@@ -1,5 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi';
-import { registerSchema, loginSchema } from './auth.validation';
+import { registerSchema, loginSchema, logoutSchema, refreshTokenSchema } from './auth.validation';
 import { successResponse, errorResponse } from '../../utils/apiSchema';
 
 const userResponseSchema = z.object({
@@ -8,19 +8,10 @@ const userResponseSchema = z.object({
   role: z.string(),
 });
 
-// The input schema for the refresh endpoint
-export const refreshTokenSchema = z.object({
-  refreshToken: z.string().min(1),
-});
-
 // The output schema for tokens
 const tokenResponseSchema = z.object({
   accessToken: z.string(),
   refreshToken: z.string(),
-});
-
-const logoutSchema = z.object({
-  refreshToken: z.string().min(1),
 });
 
 export const registerRoute = createRoute({
