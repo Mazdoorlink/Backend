@@ -48,7 +48,7 @@ export class AuthService {
 
   async register(data: any) {
     const db = this.db();
-
+    if (!data.termsAccepted) throw new AppError('Terms and conditions not accepted');
     const existingUser = await db
       .select()
       .from(users)
