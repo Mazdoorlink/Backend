@@ -19,6 +19,10 @@ const tokenResponseSchema = z.object({
   refreshToken: z.string(),
 });
 
+const logoutSchema = z.object({
+  refreshToken: z.string().min(1),
+});
+
 export const registerRoute = createRoute({
   method: 'post',
   path: '/register',
@@ -52,5 +56,16 @@ export const refreshRoute = createRoute({
   responses: {
     200: successResponse(tokenResponseSchema, 'Tokens refreshed successfully'),
     401: errorResponse('Invalid or expired refresh token'),
+  },
+});
+
+export const logoutRoute = createRoute({
+  method: 'post',
+  path: '/logout',
+  tags: ['Authentication'],
+  request: { body: { content: { 'application/json': { schema: logoutSchema } } } },
+  responses: {
+    200: successResponse(z.null(), 'Logged out successfully'),
+    400: errorResponse('Invalid or expired refresh token'),
   },
 });

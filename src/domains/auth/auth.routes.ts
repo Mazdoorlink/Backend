@@ -1,5 +1,5 @@
 // src/domains/auth/auth.routes.ts
-import { registerRoute, loginRoute, refreshRoute } from './auth.api';
+import { registerRoute, loginRoute, refreshRoute, logoutRoute } from './auth.api';
 import { AuthService } from './auth.service';
 import { createRouter } from '../../utils/appFactory';
 import { BindingsType } from '../../types';
@@ -32,6 +32,21 @@ authRoutes.openapi(refreshRoute, async (c) => {
       success: true as const,
       message: 'Tokens refreshed successfully',
       data: tokens,
+    },
+    200,
+  );
+});
+
+authRoutes.openapi(logoutRoute, async (c) => {
+  const { refreshToken } = c.req.valid('json');
+  const authService = new AuthService(c.env);
+
+  await authService.logout(refreshToken);
+  return c.json(
+    {
+      success: true as const,
+      message: 'Logged out successfully',
+      data: null,
     },
     200,
   );

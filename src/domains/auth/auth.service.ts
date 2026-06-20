@@ -129,4 +129,18 @@ export class AuthService {
       throw new AppError('Invalid or expired refresh token', 401);
     }
   }
+
+  async logout(refreshToken: string) {
+    const db = this.db();
+
+    // Attempt to delete and return the deleted records
+    const deletedTokens = await db
+      .delete(refreshTokens)
+      .where(eq(refreshTokens.token, refreshToken))
+      .returning();
+
+    if (deletedTokens.length === 0) {
+      throw new AppError('Invalid refresh token');
+    }
+  }
 }
