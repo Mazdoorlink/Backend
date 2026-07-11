@@ -15,6 +15,27 @@
       "when": 1780216224270,
       "tag": "0001_even_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783748679510,
+      "tag": "0002_ambitious_black_crow",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783748980818,
+      "tag": "0003_uneven_the_hunter",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783749264066,
+      "tag": "0004_oval_mongoose",
+      "breakpoints": true
     }
   ]
 }

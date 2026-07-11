@@ -1,7 +1,10 @@
-import { pgTable, uuid, varchar, timestamp } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { pgTable, uuid, varchar, timestamp, bigint } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: uuid('id')
+    .default(sql`uuidv7()`)
+    .primaryKey(),
   mobile: varchar('mobile', { length: 10 }).notNull().unique(),
   password: varchar('password').notNull(),
   role: varchar('role', { enum: ['ADMIN', 'WORKER', 'CONTRACTOR', 'AGENT'] }).notNull(),
@@ -12,7 +15,7 @@ export const users = pgTable('users', {
 
 // Production-grade session management
 export const refreshTokens = pgTable('refresh_tokens', {
-  id: uuid('id').defaultRandom().primaryKey(),
+  id: bigint('id', { mode: 'number' }).primaryKey().generatedAlwaysAsIdentity(),
   userId: uuid('user_id')
     .references(() => users.id, { onDelete: 'cascade' })
     .notNull(),
