@@ -5,7 +5,7 @@ import { HTTPException } from 'hono/http-exception';
 export const globalErrorHandler: ErrorHandler = (err, c) => {
   // Handle our custom business logic errors
   if (err instanceof AppError) {
-    return c.json({ success: false, message: err.message }, err.statusCode as any);
+    return c.json({ success: false, message: err.message }, err.statusCode);
   }
 
   // Handle Hono's built-in HTTP exceptions (like 404s)
