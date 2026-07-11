@@ -126,7 +126,7 @@ export class AuthService {
       }
 
       return await this.generateTokens(userRecord[0].id, userRecord[0].role);
-    } catch (error) {
+    } catch {
       throw new AppError('Invalid or expired refresh token', 401);
     }
   }

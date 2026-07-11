@@ -23,7 +23,7 @@ export const requireRole = (allowedRoles: string[]) => {
       // Attach user info to context for downstream use
       c.set('user', decodedPayload);
       await next();
-    } catch (error) {
+    } catch {
       return c.json({ success: false, message: 'Invalid or expired token' }, 401);
     }
   };
