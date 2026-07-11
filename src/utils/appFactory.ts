@@ -1,9 +1,10 @@
 // src/utils/appFactory.ts
 import { OpenAPIHono } from '@hono/zod-openapi';
+import { Env } from 'hono';
 
 // This factory function creates a new router with the FRS-compliant error hook attached
-export const createRouter = <T extends Record<string, any> = object>() => {
-  return new OpenAPIHono<T>({
+export const createRouter = <E extends Env = Env>() => {
+  return new OpenAPIHono<E>({
     defaultHook: (result, c) => {
       if (!result.success) {
         const cleanErrors = result.error.issues.map((issue) => issue.message);
