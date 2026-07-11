@@ -5,6 +5,7 @@ import { setupDb } from '../../db/db';
 import { users, refreshTokens } from '../../db/schema';
 import { AppError } from '../../utils/AppError';
 import { BindingsType } from '../../types';
+import { LoginDto, RefreshTokenDto, RegisterUserDto } from './auth.validation';
 
 export class AuthService {
   // Create a private property to hold the cached database instance
@@ -46,7 +47,7 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async register(data: any) {
+  async register(data: RegisterUserDto) {
     const db = this.db();
     if (!data.termsAccepted) throw new AppError('Terms and conditions not accepted');
     const existingUser = await db
@@ -76,7 +77,7 @@ export class AuthService {
     };
   }
 
-  async login(data: any) {
+  async login(data: LoginDto) {
     const db = this.db();
 
     const userRecord = await db.select().from(users).where(eq(users.mobile, data.mobile)).limit(1);
@@ -97,16 +98,16 @@ export class AuthService {
     };
   }
 
-  async rotateRefreshToken(oldRefreshToken: string) {
+  async rotateRefreshToken(data: RefreshTokenDto) {
     const db = this.db();
 
     try {
-      const decoded = await verify(oldRefreshToken, this.env.JWT_REFRESH_SECRET, 'HS256');
+      const decoded = await verify(data.refreshToken, this.env.JWT_REFRESH_SECRET, 'HS256');
 
       const tokenRecord = await db
         .select()
         .from(refreshTokens)
-        .where(eq(refreshTokens.token, oldRefreshToken))
+        .where(eq(refreshTokens.token, data.refreshToken))
         .limit(1);
 
       if (tokenRecord.length === 0) {
@@ -130,13 +131,13 @@ export class AuthService {
     }
   }
 
-  async logout(refreshToken: string) {
+  async logout(data: RefreshTokenDto) {
     const db = this.db();
 
     // Attempt to delete and return the deleted records
     const deletedTokens = await db
       .delete(refreshTokens)
-      .where(eq(refreshTokens.token, refreshToken))
+      .where(eq(refreshTokens.token, data.refreshToken))
       .returning();
 
     if (deletedTokens.length === 0) {

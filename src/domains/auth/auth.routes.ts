@@ -23,10 +23,10 @@ authRoutes.openapi(loginRoute, async (c) => {
 });
 
 authRoutes.openapi(refreshRoute, async (c) => {
-  const { refreshToken } = c.req.valid('json');
+  const data = c.req.valid('json');
   const authService = new AuthService(c.env);
 
-  const tokens = await authService.rotateRefreshToken(refreshToken);
+  const tokens = await authService.rotateRefreshToken(data);
   return c.json(
     {
       success: true as const,
@@ -38,10 +38,10 @@ authRoutes.openapi(refreshRoute, async (c) => {
 });
 
 authRoutes.openapi(logoutRoute, async (c) => {
-  const { refreshToken } = c.req.valid('json');
+  const data = c.req.valid('json');
   const authService = new AuthService(c.env);
 
-  await authService.logout(refreshToken);
+  await authService.logout(data);
   return c.json(
     {
       success: true as const,
