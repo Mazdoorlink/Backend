@@ -92,7 +92,7 @@ export class AuthService {
     }
 
     const isMatch = await bcrypt.compare(data.password, user.password);
-    if (!isMatch) throw new AppError(AUTH_ERRORS.PASSWORD_NOT_SET, 401);
+    if (!isMatch) throw new AppError(AUTH_ERRORS.INVALID_CREDENTIALS, 401);
 
     const tokens = await this.generateTokens(user.id, user.role);
 
