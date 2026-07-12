@@ -2,6 +2,7 @@ import { createRoute, z } from '@hono/zod-openapi';
 import { registerSchema, loginSchema, logoutSchema, refreshTokenSchema } from './auth.validation';
 import { successResponse, errorResponse } from '../../utils/apiSchema';
 import { USER_ROLES } from '../../types/constants';
+import { AUTH_ERRORS, AUTH_SUCCESS } from './auth.messages';
 
 const userResponseSchema = z.object({
   id: z.uuid(),
@@ -21,9 +22,9 @@ export const registerRoute = createRoute({
   tags: ['Authentication'],
   request: { body: { content: { 'application/json': { schema: registerSchema } } } },
   responses: {
-    201: successResponse(userResponseSchema, 'User registered successfully'),
-    400: errorResponse('Validation Error or User Exists'),
-    409: errorResponse('User already exists with this mobile number'),
+    201: successResponse(userResponseSchema, AUTH_SUCCESS.REGISTER),
+    400: errorResponse('Validation Error or Terms not accepted'),
+    409: errorResponse(AUTH_ERRORS.USER_EXISTS),
   },
 });
 
@@ -35,11 +36,11 @@ export const loginRoute = createRoute({
   responses: {
     200: successResponse(
       tokenResponseSchema.extend({ user: userResponseSchema }),
-      'Login successful',
+      AUTH_SUCCESS.LOGIN,
     ),
-    400: errorResponse('Account missing password (OTP only account)'),
-    401: errorResponse('Invalid credentials'),
-    403: errorResponse('Account is blocked, inactive, or suspended'),
+    400: errorResponse(AUTH_ERRORS.PASSWORD_NOT_SET),
+    401: errorResponse(AUTH_ERRORS.INVALID_CREDENTIALS),
+    403: errorResponse(AUTH_ERRORS.ACCOUNT_INACTIVE_GENERIC),
   },
 });
 
@@ -49,8 +50,8 @@ export const refreshRoute = createRoute({
   tags: ['Authentication'],
   request: { body: { content: { 'application/json': { schema: refreshTokenSchema } } } },
   responses: {
-    200: successResponse(tokenResponseSchema, 'Tokens refreshed successfully'),
-    401: errorResponse('Invalid or expired refresh token'),
+    200: successResponse(tokenResponseSchema, AUTH_SUCCESS.REFRESH),
+    401: errorResponse(AUTH_ERRORS.TOKEN_INVALID),
   },
 });
 
@@ -60,8 +61,8 @@ export const logoutRoute = createRoute({
   tags: ['Authentication'],
   request: { body: { content: { 'application/json': { schema: logoutSchema } } } },
   responses: {
-    200: successResponse(z.null(), 'Logged out successfully'),
-    400: errorResponse('User account is inactive or deleted'),
-    401: errorResponse('Invalid or expired refresh token'),
+    200: successResponse(z.null(), AUTH_SUCCESS.LOGOUT),
+    400: errorResponse(AUTH_ERRORS.ACCOUNT_INACTIVE_GENERIC),
+    401: errorResponse(AUTH_ERRORS.TOKEN_INVALID),
   },
 });

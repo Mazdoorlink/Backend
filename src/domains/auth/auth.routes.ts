@@ -3,6 +3,7 @@ import { registerRoute, loginRoute, refreshRoute, logoutRoute } from './auth.api
 import { AuthService } from './auth.service';
 import { createRouter } from '../../utils/appFactory';
 import { BindingsType } from '../../types';
+import { AUTH_SUCCESS } from './auth.messages';
 
 const authRoutes = createRouter<{ Bindings: BindingsType }>();
 
@@ -11,7 +12,7 @@ authRoutes.openapi(registerRoute, async (c) => {
   const authService = new AuthService(c.env);
 
   const user = await authService.register(data);
-  return c.json({ success: true as const, message: 'User registered', data: user }, 201);
+  return c.json({ success: true as const, message: AUTH_SUCCESS.REGISTER, data: user }, 201);
 });
 
 authRoutes.openapi(loginRoute, async (c) => {
@@ -19,7 +20,7 @@ authRoutes.openapi(loginRoute, async (c) => {
   const authService = new AuthService(c.env);
 
   const result = await authService.login(data);
-  return c.json({ success: true as const, message: 'Login successful', data: result }, 200);
+  return c.json({ success: true as const, message: AUTH_SUCCESS.LOGIN, data: result }, 200);
 });
 
 authRoutes.openapi(refreshRoute, async (c) => {
@@ -30,7 +31,7 @@ authRoutes.openapi(refreshRoute, async (c) => {
   return c.json(
     {
       success: true as const,
-      message: 'Tokens refreshed successfully',
+      message: AUTH_SUCCESS.REFRESH,
       data: tokens,
     },
     200,
@@ -45,7 +46,7 @@ authRoutes.openapi(logoutRoute, async (c) => {
   return c.json(
     {
       success: true as const,
-      message: 'Logged out successfully',
+      message: AUTH_SUCCESS.LOGOUT,
       data: null,
     },
     200,

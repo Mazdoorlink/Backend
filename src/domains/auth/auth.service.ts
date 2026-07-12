@@ -6,6 +6,7 @@ import { users, refreshTokens } from '../../db/schema';
 import { AppError } from '../../utils/AppError';
 import { BindingsType } from '../../types';
 import { LoginDto, RefreshTokenDto, RegisterUserDto } from './auth.validation';
+import { AUTH_ERRORS } from './auth.messages';
 
 export class AuthService {
   // Create a private property to hold the cached database instance
@@ -49,14 +50,14 @@ export class AuthService {
 
   async register(data: RegisterUserDto) {
     const db = this.db();
-    if (!data.termsAccepted) throw new AppError('Terms and conditions not accepted');
+    if (!data.termsAccepted) throw new AppError(AUTH_ERRORS.TERMS_NOT_ACCEPTED);
 
     const [existingUser] = await db
       .select()
       .from(users)
       .where(eq(users.mobile, data.mobile))
       .limit(1);
-    if (existingUser) throw new AppError('User already exists', 409);
+    if (existingUser) throw new AppError(AUTH_ERRORS.USER_EXISTS, 409);
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(data.password, salt);
@@ -82,16 +83,16 @@ export class AuthService {
     const db = this.db();
 
     const [user] = await db.select().from(users).where(eq(users.mobile, data.mobile)).limit(1);
-    if (!user) throw new AppError('Invalid credentials', 401);
+    if (!user) throw new AppError(AUTH_ERRORS.INVALID_CREDENTIALS, 401);
     if (user.status !== 'ACTIVE') {
-      throw new AppError(`Your account is currently ${user.status.toLowerCase()}`, 403);
+      throw new AppError(AUTH_ERRORS.ACCOUNT_NOT_ACTIVE(user.status), 403);
     }
     if (!user.password) {
-      throw new AppError('This account does not have a password set. Please log in via OTP.', 400);
+      throw new AppError(AUTH_ERRORS.PASSWORD_NOT_SET, 400);
     }
 
     const isMatch = await bcrypt.compare(data.password, user.password);
-    if (!isMatch) throw new AppError('Invalid credentials', 401);
+    if (!isMatch) throw new AppError(AUTH_ERRORS.PASSWORD_NOT_SET, 401);
 
     const tokens = await this.generateTokens(user.id, user.role);
 
@@ -118,23 +119,23 @@ export class AuthService {
         .limit(1);
 
       if (!tokenRecord) {
-        throw new AppError('Refresh token revoked or invalid', 401);
+        throw new AppError(AUTH_ERRORS.TOKEN_INVALID, 401);
       }
 
       await db.delete(refreshTokens).where(eq(refreshTokens.id, tokenRecord.id));
 
-      const [userRecord] = await db
+      const [user] = await db
         .select()
         .from(users)
         .where(eq(users.id, decoded.id as string))
         .limit(1);
-      if (!userRecord || userRecord.status !== 'ACTIVE') {
-        throw new AppError('User account is inactive or deleted');
+      if (!user || user.status !== 'ACTIVE') {
+        throw new AppError(AUTH_ERRORS.ACCOUNT_NOT_ACTIVE(user.status));
       }
 
-      return await this.generateTokens(userRecord.id, userRecord.role);
+      return await this.generateTokens(user.id, user.role);
     } catch {
-      throw new AppError('Invalid or expired refresh token', 401);
+      throw new AppError(AUTH_ERRORS.TOKEN_INVALID, 401);
     }
   }
 
@@ -148,7 +149,7 @@ export class AuthService {
       .returning();
 
     if (!deletedTokens) {
-      throw new AppError('Invalid refresh token');
+      throw new AppError(AUTH_ERRORS.TOKEN_INVALID, 401);
     }
   }
 }
