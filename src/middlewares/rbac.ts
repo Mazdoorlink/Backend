@@ -1,7 +1,8 @@
 import { Context, Next } from 'hono';
 import { verify } from 'hono/jwt';
+import { UserRole } from '../types/constants';
 
-export const requireRole = (allowedRoles: string[]) => {
+export const requireRole = (allowedRoles: UserRole[]) => {
   return async (c: Context, next: Next) => {
     const authHeader = c.req.header('Authorization');
 
@@ -16,7 +17,7 @@ export const requireRole = (allowedRoles: string[]) => {
       const decodedPayload = await verify(token, c.env.JWT_SECRET, 'HS256');
 
       // Check if the user's role is in the allowed list
-      if (!allowedRoles.includes(decodedPayload.role as string)) {
+      if (!allowedRoles.includes(decodedPayload.role as UserRole)) {
         return c.json({ success: false, message: 'Unauthorized access' }, 403);
       }
 

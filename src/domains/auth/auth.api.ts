@@ -1,11 +1,12 @@
 import { createRoute, z } from '@hono/zod-openapi';
 import { registerSchema, loginSchema, logoutSchema, refreshTokenSchema } from './auth.validation';
 import { successResponse, errorResponse } from '../../utils/apiSchema';
+import { USER_ROLES } from '../../types/constants';
 
 const userResponseSchema = z.object({
   id: z.uuid(),
   mobile: z.string(),
-  role: z.string(),
+  role: z.enum(USER_ROLES),
 });
 
 // The output schema for tokens
@@ -22,6 +23,7 @@ export const registerRoute = createRoute({
   responses: {
     201: successResponse(userResponseSchema, 'User registered successfully'),
     400: errorResponse('Validation Error or User Exists'),
+    409: errorResponse('User already exists with this mobile number'),
   },
 });
 
@@ -35,7 +37,9 @@ export const loginRoute = createRoute({
       tokenResponseSchema.extend({ user: userResponseSchema }),
       'Login successful',
     ),
+    400: errorResponse('Account missing password (OTP only account)'),
     401: errorResponse('Invalid credentials'),
+    403: errorResponse('Account is blocked, inactive, or suspended'),
   },
 });
 
@@ -57,6 +61,7 @@ export const logoutRoute = createRoute({
   request: { body: { content: { 'application/json': { schema: logoutSchema } } } },
   responses: {
     200: successResponse(z.null(), 'Logged out successfully'),
-    400: errorResponse('Invalid or expired refresh token'),
+    400: errorResponse('User account is inactive or deleted'),
+    401: errorResponse('Invalid or expired refresh token'),
   },
 });

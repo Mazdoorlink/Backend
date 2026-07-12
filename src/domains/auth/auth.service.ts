@@ -50,17 +50,18 @@ export class AuthService {
   async register(data: RegisterUserDto) {
     const db = this.db();
     if (!data.termsAccepted) throw new AppError('Terms and conditions not accepted');
-    const existingUser = await db
+
+    const [existingUser] = await db
       .select()
       .from(users)
       .where(eq(users.mobile, data.mobile))
       .limit(1);
-    if (existingUser.length > 0) throw new AppError('User already exists');
+    if (existingUser) throw new AppError('User already exists', 409);
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(data.password, salt);
 
-    const newUser = await db
+    const [newUser] = await db
       .insert(users)
       .values({
         mobile: data.mobile,
@@ -71,29 +72,35 @@ export class AuthService {
       .returning();
 
     return {
-      id: newUser[0].id,
-      mobile: newUser[0].mobile,
-      role: newUser[0].role,
+      id: newUser.id,
+      mobile: newUser.mobile,
+      role: newUser.role,
     };
   }
 
   async login(data: LoginDto) {
     const db = this.db();
 
-    const userRecord = await db.select().from(users).where(eq(users.mobile, data.mobile)).limit(1);
-    if (userRecord.length === 0) throw new AppError('Invalid credentials', 401);
+    const [user] = await db.select().from(users).where(eq(users.mobile, data.mobile)).limit(1);
+    if (!user) throw new AppError('Invalid credentials', 401);
+    if (user.status !== 'ACTIVE') {
+      throw new AppError(`Your account is currently ${user.status.toLowerCase()}`, 403);
+    }
+    if (!user.password) {
+      throw new AppError('This account does not have a password set. Please log in via OTP.', 400);
+    }
 
-    const isMatch = await bcrypt.compare(data.password, userRecord[0].password);
-    if (!isMatch) throw new AppError('Invalid credentials');
+    const isMatch = await bcrypt.compare(data.password, user.password);
+    if (!isMatch) throw new AppError('Invalid credentials', 401);
 
-    const tokens = await this.generateTokens(userRecord[0].id, userRecord[0].role);
+    const tokens = await this.generateTokens(user.id, user.role);
 
     return {
       ...tokens,
       user: {
-        id: userRecord[0].id,
-        mobile: userRecord[0].mobile,
-        role: userRecord[0].role,
+        id: user.id,
+        mobile: user.mobile,
+        role: user.role,
       },
     };
   }
@@ -104,28 +111,28 @@ export class AuthService {
     try {
       const decoded = await verify(data.refreshToken, this.env.JWT_REFRESH_SECRET, 'HS256');
 
-      const tokenRecord = await db
+      const [tokenRecord] = await db
         .select()
         .from(refreshTokens)
         .where(eq(refreshTokens.token, data.refreshToken))
         .limit(1);
 
-      if (tokenRecord.length === 0) {
+      if (!tokenRecord) {
         throw new AppError('Refresh token revoked or invalid', 401);
       }
 
-      await db.delete(refreshTokens).where(eq(refreshTokens.id, tokenRecord[0].id));
+      await db.delete(refreshTokens).where(eq(refreshTokens.id, tokenRecord.id));
 
-      const userRecord = await db
+      const [userRecord] = await db
         .select()
         .from(users)
         .where(eq(users.id, decoded.id as string))
         .limit(1);
-      if (userRecord.length === 0 || userRecord[0].status !== 'ACTIVE') {
+      if (!userRecord || userRecord.status !== 'ACTIVE') {
         throw new AppError('User account is inactive or deleted');
       }
 
-      return await this.generateTokens(userRecord[0].id, userRecord[0].role);
+      return await this.generateTokens(userRecord.id, userRecord.role);
     } catch {
       throw new AppError('Invalid or expired refresh token', 401);
     }
@@ -135,12 +142,12 @@ export class AuthService {
     const db = this.db();
 
     // Attempt to delete and return the deleted records
-    const deletedTokens = await db
+    const [deletedTokens] = await db
       .delete(refreshTokens)
       .where(eq(refreshTokens.token, data.refreshToken))
       .returning();
 
-    if (deletedTokens.length === 0) {
+    if (!deletedTokens) {
       throw new AppError('Invalid refresh token');
     }
   }
